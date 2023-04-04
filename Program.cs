@@ -17,64 +17,119 @@ namespace PCSC_Connection
         private const byte MSB = 0x00;
         public static void Main()
         {
-            using (var monitor = MonitorFactory.Instance.Create(SCardScope.System))
+            using (PCSC.Monitoring.ISCardMonitor monitor = MonitorFactory.Instance.Create(SCardScope.System))
             {
-                using (var context = ContextFactory.Instance.Establish(SCardScope.System))
+                using (PCSC.ISCardContext context = ContextFactory.Instance.Establish(SCardScope.System))
                 {
                     Console.WriteLine("This program will monitor all SmartCard readers and display all status changes.");
 
-                    var readerNames = "ACS ACR1252 1S CL Reader PICC 0";
+                    string[] readerNames = context.GetReaders();
+
+                    if (IsEmpty(readerNames))
+                    {
+                        Console.Error.WriteLine("You need at least one reader in order to run this programm.");
+                        Console.ReadKey();
+                        return;
+                    }
+                    string readerName = ChooseReader(readerNames);
+
+                    //string readerNames = "ACS ACR1252 1S CL Reader PICC 0";
 
                     AttachToAllEvents(monitor); // Remember to detach, if you use this in production!
 
-                    monitor.Start(readerNames);
+                    monitor.Start(readerName);
 
-                    using (var isoReader = new IsoReader(
+                    using (PCSC.Iso7816.IsoReader isoReader = new IsoReader(
                         context: context,
-                        readerName: readerNames,
+                        readerName: readerName,
                         mode: SCardShareMode.Shared,
                         protocol: SCardProtocol.Any,
                         releaseContextOnDispose: false))
                     {
-                        var card = new MifareCard(isoReader);
+                        PCSC_Connection.MifareCard card = new MifareCard(isoReader);
+                        string[] menuItems = new string[] { "[1] - Загрузить ключ", "[2] - Аутентификация блока", "[3] - Чтение блока", "[4] - Запись блока", "[5] - Считать UID", "[Shift-Q] - Выход" };
 
                         while (true)
                         {
-                            Console.WriteLine("[1] - Загрузить ключ");
-                            Console.WriteLine("[2] - Аутентификация блока");
-                            Console.WriteLine("[3] - Чтение блока");
-                            Console.WriteLine("[4] - Запись блока");
-                            Console.WriteLine("[5] - Считать UID");
-                            Console.WriteLine("[Shift-Q] - Выход");
 
+                            foreach (string str in menuItems)
+                            {
+                                Console.WriteLine(str);
+                            }
 
                             byte keyNumber = 0;
-                            var key = Console.ReadKey(true);
-                            if (key.Key == ConsoleKey.D1) keyNumber = loadKey(card);
-                            if (key.Key == ConsoleKey.D2) AuthenticateBlock(card, keyNumber);
+                            System.ConsoleKeyInfo key = Console.ReadKey(true);
+
+                            if (key.Key == ConsoleKey.D1)
+                            {
+                                keyNumber = loadKey(card);
+                            }
+
+                            if (key.Key == ConsoleKey.D2)
+                            {
+                                AuthenticateBlock(card, keyNumber);
+                            }
+
                             if (key.Key == ConsoleKey.D3)
                             {
                                 Console.WriteLine("Выберете блок для чтения:");
                                 ReadCard(card, Convert.ToByte(Console.ReadLine()));
                             }
+
                             if (key.Key == ConsoleKey.D4)
                             {
                                 Console.WriteLine("Выберете блок для записи:");
                                 WriteCard(card, Convert.ToByte(Console.ReadLine()));
                             }
-                            if (key.Key == ConsoleKey.D5) ReadUid(card);
 
-                            if (ExitRequested(key)) break;
+                            if (key.Key == ConsoleKey.D5)
+                            {
+                                ReadUid(card);
+                            }
 
+                            if (ExitRequested(key))
+                            {
+                                break;
+                            }
                         }
                     }
                 }
             }
         }
 
+        private static string ChooseReader(IList<string> readerNames)
+        {
+            Console.WriteLine(new string('=', 79));
+            Console.WriteLine("WARNING!! This will overwrite data in MSB {0:X2} LSB {1:X2} using the default key.", MSB,
+                0x08);
+            Console.WriteLine(new string('=', 79));
+
+            // Show available readers.
+            Console.WriteLine("Available readers: ");
+            for (var i = 0; i < readerNames.Count; i++)
+            {
+                Console.WriteLine($"[{i}] {readerNames[i]}");
+            }
+
+            // Ask the user which one to choose.
+            Console.WriteLine("Choose reader:");
+
+            string line = Console.ReadLine();
+
+            if (int.TryParse(line, out int choice) && (choice >= 0) && (choice <= readerNames.Count - 1))
+            {
+                return readerNames[choice];
+            }
+
+            Console.WriteLine("An invalid number has been entered.");
+            Console.ReadKey();
+
+            return null;
+        }
+
         private static void ShowUserInfo(IEnumerable<string> readerNames)
         {
-            foreach (var reader in readerNames)
+            foreach (string reader in readerNames)
             {
                 Console.WriteLine($"Start monitoring for reader {reader}.");
             }
@@ -104,9 +159,11 @@ namespace PCSC_Connection
         private static byte loadKey(PCSC_Connection.MifareCard card)
         {
             byte keyNum = chooseKeyNum();
-            bool loadKeySuccessful = card.LoadKey(KeyStructure.NonVolatileMemory, keyNum, scanKey(card, keyNum));
-
-            if (!loadKeySuccessful)
+            try
+            {
+                bool loadKeySuccessful = card.LoadKey(KeyStructure.NonVolatileMemory, keyNum, scanKey(card, keyNum));
+            }
+            catch
             {
                 throw new Exception("LOAD KEY failed.");
             }
@@ -158,7 +215,7 @@ namespace PCSC_Connection
         {
             Console.WriteLine("Выберете блок для Аутентификации:");
             byte chosenBlock = Convert.ToByte(Console.ReadLine());
-            var authSuccessful = card.Authenticate(MSB, chosenBlock, KeyType.KeyA, keyNumber);
+            bool authSuccessful = card.Authenticate(MSB, chosenBlock, KeyType.KeyA, keyNumber);
             if (!authSuccessful)
             {
                 throw new Exception("AUTHENTICATE failed.");
@@ -168,7 +225,7 @@ namespace PCSC_Connection
 
         private static void ReadCard(PCSC_Connection.MifareCard card, byte chosenBlock)
         {
-            var result = card.ReadBinary(MSB, chosenBlock, 16);
+            byte[] result = card.ReadBinary(MSB, chosenBlock, 16);
             Console.WriteLine("Значение в блока: {0}",
                 (result != null)
                     ? BitConverter.ToString(result)
@@ -178,7 +235,7 @@ namespace PCSC_Connection
         {
             ReadCard(card, chosenBlock);
             Console.WriteLine("Хотите перезаписать? y/n");
-            var key = Console.ReadKey(true);
+            ConsoleKeyInfo key = Console.ReadKey(true);
             if (key.Key == ConsoleKey.Y)
             {
 
@@ -201,7 +258,7 @@ namespace PCSC_Connection
                 }
                 byte[] DATA_TO_WRITE = StringToByteArray(inputValue);
 
-                var updateSuccessful = card.UpdateBinary(MSB, chosenBlock, DATA_TO_WRITE);
+                bool updateSuccessful = card.UpdateBinary(MSB, chosenBlock, DATA_TO_WRITE);
 
                 if (!updateSuccessful)
                 {
@@ -217,11 +274,17 @@ namespace PCSC_Connection
 
         private static void ReadUid(PCSC_Connection.MifareCard card)
         {
-            //var uid = card.GetData();
-            //Console.WriteLine("UID: {0}\n",
-            //    (uid != null)
-            //        ? BitConverter.ToString(uid)
-            //        : '0');
+            byte[] uid = card.GetData();
+
+            if (uid != null)
+            {
+                Console.WriteLine("UID: {0}\n", BitConverter.ToString(uid));
+            }
+            else
+            {
+                Console.WriteLine("UID: uid not found\n");
+            }
+
         }
 
         public static byte[] StringToByteArray(string hex)

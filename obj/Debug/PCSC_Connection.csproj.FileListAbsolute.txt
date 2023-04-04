@@ -7,8 +7,8 @@ D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCS
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\bin\Debug\PCSC.xml
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\bin\Debug\PCSC.Iso7816.pdb
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\bin\Debug\PCSC.Iso7816.xml
-D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.AssemblyReference.cache
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.CoreCompileInputs.cache
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.CopyComplete
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.exe
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.pdb
+D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.AssemblyReference.cache
