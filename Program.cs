@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using PCSC;
 using PCSC.Iso7816;
 using PCSC.Exceptions;
@@ -220,7 +218,7 @@ namespace PCSC_Connection
             {
                 throw new Exception("AUTHENTICATE failed.");
             }
-            Console.WriteLine($"Блок: {0:X2} Аутентифицирован\n", chosenBlock);
+            Console.WriteLine($"Блок: {chosenBlock:X2} Аутентифицирован\n", chosenBlock);
         }
 
         private static void ReadCard(PCSC_Connection.MifareCard card, byte chosenBlock)
@@ -231,6 +229,7 @@ namespace PCSC_Connection
                     ? BitConverter.ToString(result)
                     : null);
         }
+
         private static void WriteCard(PCSC_Connection.MifareCard card, byte chosenBlock)
         {
             ReadCard(card, chosenBlock);

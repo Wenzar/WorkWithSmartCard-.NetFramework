@@ -17,7 +17,7 @@ namespace PCSC_Connection
 
         public byte[] GetData()
         {
-            var getDataCmd = new CommandApdu(IsoCase.Case2Short, SCardProtocol.Any)
+            CommandApdu getDataCmd = new CommandApdu(IsoCase.Case2Short, SCardProtocol.Any)
             {
                 CLA = CUSTOM_CLA,
                 Instruction = InstructionCode.GetData,
@@ -25,7 +25,7 @@ namespace PCSC_Connection
                 P2 = 0x00
             };
 
-            var response = _isoReader.Transmit(getDataCmd);
+            Response response = _isoReader.Transmit(getDataCmd);
             return IsSuccess(response)
                     ? response.GetData() ?? new byte[0]
                     : null;
@@ -33,7 +33,7 @@ namespace PCSC_Connection
 
         public bool LoadKey(KeyStructure keyStructure, byte keyNumber, byte[] key)
         {
-            var loadKeyCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
+            CommandApdu loadKeyCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
             {
                 CLA = CUSTOM_CLA,
                 Instruction = InstructionCode.ExternalAuthenticate,
@@ -43,14 +43,14 @@ namespace PCSC_Connection
             };
 
             Debug.WriteLine($"Load Authentication Keys: {BitConverter.ToString(loadKeyCmd.ToArray())}");
-            var response = _isoReader.Transmit(loadKeyCmd);
+            Response response = _isoReader.Transmit(loadKeyCmd);
             Debug.WriteLine($"SW1 SW2 = {response.SW1:X2} {response.SW2:X2}");
             return IsSuccess(response);
         }
 
         public bool Authenticate(byte msb, byte lsb, KeyType keyType, byte keyNumber)
         {
-            var authBlock = new GeneralAuthenticate
+            GeneralAuthenticate authBlock = new GeneralAuthenticate
             {
                 Msb = msb,
                 Lsb = lsb,
@@ -58,7 +58,7 @@ namespace PCSC_Connection
                 KeyNumber = keyNumber
             };
 
-            var authKeyCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
+            CommandApdu authKeyCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
             {
                 CLA = CUSTOM_CLA,
                 Instruction = InstructionCode.InternalAuthenticate,
@@ -68,11 +68,8 @@ namespace PCSC_Connection
             };
 
             Debug.WriteLine($"General Authenticate: {BitConverter.ToString(authKeyCmd.ToArray())}");
-            var response = _isoReader.Transmit(authKeyCmd);
+            Response response = _isoReader.Transmit(authKeyCmd);
             Debug.WriteLine($"SW1 SW2 = {response.SW1:X2} {response.SW2:X2}");
-            // Console.WriteLine(BitConverter.ToString(authKeyCmd.Data));
-            // Console.WriteLine($"SW1: = {response.SW1:X2}");
-            //Console.WriteLine($"SW2: = {response.SW2:X2}");
 
             return (response.SW1 == 0x90) && (response.SW2 == 0x00);
         }
@@ -81,7 +78,7 @@ namespace PCSC_Connection
         {
             unchecked
             {
-                var readBinaryCmd = new CommandApdu(IsoCase.Case2Short, SCardProtocol.Any)
+                CommandApdu readBinaryCmd = new CommandApdu(IsoCase.Case2Short, SCardProtocol.Any)
                 {
                     CLA = CUSTOM_CLA,
                     Instruction = InstructionCode.ReadBinary,
@@ -91,7 +88,7 @@ namespace PCSC_Connection
                 };
 
                 Debug.WriteLine($"Read Binary: {BitConverter.ToString(readBinaryCmd.ToArray())}");
-                var response = _isoReader.Transmit(readBinaryCmd);
+                Response response = _isoReader.Transmit(readBinaryCmd);
                 Debug.WriteLine($"SW1 SW2 = {response.SW1:X2} {response.SW2:X2} Data: {BitConverter.ToString(response.GetData())}");
 
                 return IsSuccess(response)
@@ -102,7 +99,7 @@ namespace PCSC_Connection
 
         public bool UpdateBinary(byte msb, byte lsb, byte[] data)
         {
-            var updateBinaryCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
+            CommandApdu updateBinaryCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
             {
                 CLA = CUSTOM_CLA,
                 Instruction = InstructionCode.UpdateBinary,
@@ -112,14 +109,17 @@ namespace PCSC_Connection
             };
 
             Debug.WriteLine($"Update Binary: {BitConverter.ToString(updateBinaryCmd.ToArray())}");
-            var response = _isoReader.Transmit(updateBinaryCmd);
+            Response response = _isoReader.Transmit(updateBinaryCmd);
             Debug.WriteLine($"SW1 SW2 = {response.SW1:X2} {response.SW2:X2}");
 
             return IsSuccess(response);
         }
 
-        private static bool IsSuccess(Response response) =>
-            (response.SW1 == (byte)SW1Code.Normal) &&
-            (response.SW2 == 0x00);
+        private static bool IsSuccess(Response response)
+        {
+            return (response.SW1 == (byte)SW1Code.Normal) && (response.SW2 == 0x00);
+        }
+
+
     }
 }
