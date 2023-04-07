@@ -46,6 +46,7 @@ namespace PCSC_Connection
                     {
                         PCSC_Connection.MifareCard card = new MifareCard(isoReader);
                         string[] menuItems = new string[] { "[1] - Загрузить ключ", "[2] - Аутентификация блока", "[3] - Чтение блока", "[4] - Запись блока", "[5] - Считать UID", "[Shift-Q] - Выход" };
+                        List<byte> keyNumbers = new List<byte>();
 
                         while (true)
                         {
@@ -55,17 +56,17 @@ namespace PCSC_Connection
                                 Console.WriteLine(str);
                             }
 
-                            byte keyNumber = 0;
                             System.ConsoleKeyInfo key = Console.ReadKey(true);
 
                             if (key.Key == ConsoleKey.D1)
                             {
-                                keyNumber = loadKey(card);
+                                keyNumbers.Add(loadKey(card));
+                                Console.WriteLine(Convert.ToByte(keyNumbers[0]));
                             }
 
                             if (key.Key == ConsoleKey.D2)
                             {
-                                AuthenticateBlock(card, keyNumber);
+                                AuthenticateBlock(card, keyNumbers);
                             }
 
                             if (key.Key == ConsoleKey.D3)
@@ -97,9 +98,6 @@ namespace PCSC_Connection
 
         private static string ChooseReader(IList<string> readerNames)
         {
-            Console.WriteLine(new string('=', 79));
-            Console.WriteLine("WARNING!! This will overwrite data in MSB {0:X2} LSB {1:X2} using the default key.", MSB,
-                0x08);
             Console.WriteLine(new string('=', 79));
 
             // Show available readers.
@@ -209,10 +207,22 @@ namespace PCSC_Connection
             return StringToByteArray(inputKeyValue);
         }
 
-        private static void AuthenticateBlock(PCSC_Connection.MifareCard card, byte keyNumber)
+        private static void AuthenticateBlock(PCSC_Connection.MifareCard card, List<byte> keyNumbers)
         {
+            byte keyNumber;
+            Console.WriteLine("Выберете ключ для Аутентификации:");
+            try
+            {
+               keyNumber = keyNumbers[Convert.ToInt32(Console.ReadLine())];
+            }
+            catch
+            {
+                throw new Exception("Неверный номер ключа");
+            }
+
             Console.WriteLine("Выберете блок для Аутентификации:");
             byte chosenBlock = Convert.ToByte(Console.ReadLine());
+
             bool authSuccessful = card.Authenticate(MSB, chosenBlock, KeyType.KeyA, keyNumber);
             if (!authSuccessful)
             {
@@ -277,7 +287,7 @@ namespace PCSC_Connection
 
             if (uid != null)
             {
-                Console.WriteLine("UID: {0}\n", BitConverter.ToString(uid));
+                Console.WriteLine("\nUID: {0}\n", BitConverter.ToString(uid));
             }
             else
             {

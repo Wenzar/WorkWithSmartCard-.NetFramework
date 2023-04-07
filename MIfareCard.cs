@@ -42,6 +42,7 @@ namespace PCSC_Connection
                 Data = key
             };
 
+            Console.WriteLine("KEY:"+BitConverter.ToString(loadKeyCmd.Data));
             Debug.WriteLine($"Load Authentication Keys: {BitConverter.ToString(loadKeyCmd.ToArray())}");
             Response response = _isoReader.Transmit(loadKeyCmd);
             Debug.WriteLine($"SW1 SW2 = {response.SW1:X2} {response.SW2:X2}");
