@@ -12,3 +12,17 @@ D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCS
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.exe
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.pdb
 D:\Рабочий стол\Шаблоны\щерук\Csharp\ReaderConnection\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.AssemblyReference.cache
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC_Connection.exe.config
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC_Connection.exe
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC_Connection.pdb
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC.dll
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC.Iso7816.dll
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC.pdb
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC.xml
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC.Iso7816.pdb
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\bin\Debug\PCSC.Iso7816.xml
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.AssemblyReference.cache
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.CoreCompileInputs.cache
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\obj\Debug\PCSC_Connection.csproj.CopyComplete
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\obj\Debug\PCSC_Connection.exe
+D:\Download\Maxim\Programming\Csharp\PCSC_Connection\obj\Debug\PCSC_Connection.pdb

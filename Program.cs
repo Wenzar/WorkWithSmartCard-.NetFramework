@@ -13,6 +13,7 @@ namespace PCSC_Connection
     class Program
     {
         private const byte MSB = 0x00;
+
         public static void Main()
         {
             using (PCSC.Monitoring.ISCardMonitor monitor = MonitorFactory.Instance.Create(SCardScope.System))
@@ -95,7 +96,11 @@ namespace PCSC_Connection
                 }
             }
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="readerNames"></param>
+        /// <returns></returns>
         private static string ChooseReader(IList<string> readerNames)
         {
             Console.WriteLine(new string('=', 79));
@@ -123,14 +128,10 @@ namespace PCSC_Connection
             return null;
         }
 
-        private static void ShowUserInfo(IEnumerable<string> readerNames)
-        {
-            foreach (string reader in readerNames)
-            {
-                Console.WriteLine($"Start monitoring for reader {reader}.");
-            }
-        }
-
+        /// <summary>
+        /// Show card status
+        /// </summary>
+        /// <param name="monitor"></param>
         private static void AttachToAllEvents(ISCardMonitor monitor)
         {
             // Point the callback function(s) to the anonymous & static defined methods below.
