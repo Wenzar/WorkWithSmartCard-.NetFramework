@@ -15,6 +15,10 @@ namespace PCSC_Connection
             _isoReader = isoReader ?? throw new ArgumentNullException(nameof(isoReader));
         }
 
+        /// <summary>
+        /// Формирование и отправка APDU команды GetData
+        /// </summary>
+        /// <returns></returns>
         public byte[] GetData()
         {
             CommandApdu getDataCmd = new CommandApdu(IsoCase.Case2Short, SCardProtocol.Any)
@@ -31,6 +35,13 @@ namespace PCSC_Connection
                     : null;
         }
 
+        /// <summary>
+        /// Отправка APDU LoadKey
+        /// </summary>
+        /// <param name="keyStructure">Тип ключа</param>
+        /// <param name="keyNumber">Номер ключа</param>
+        /// <param name="key">Значение ключа</param>
+        /// <returns></returns>
         public bool LoadKey(KeyStructure keyStructure, byte keyNumber, byte[] key)
         {
             CommandApdu loadKeyCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
@@ -42,19 +53,27 @@ namespace PCSC_Connection
                 Data = key
             };
 
-            Console.WriteLine("KEY:"+BitConverter.ToString(loadKeyCmd.Data));
+            Console.WriteLine("KEY:" + BitConverter.ToString(loadKeyCmd.Data));
             Debug.WriteLine($"Load Authentication Keys: {BitConverter.ToString(loadKeyCmd.ToArray())}");
             Response response = _isoReader.Transmit(loadKeyCmd);
             Debug.WriteLine($"SW1 SW2 = {response.SW1:X2} {response.SW2:X2}");
             return IsSuccess(response);
         }
 
-        public bool Authenticate(byte msb, byte lsb, KeyType keyType, byte keyNumber)
+        /// <summary>
+        /// Формирование APDU для аутентификации
+        /// </summary>
+        /// <param name="msb"></param>
+        /// <param name="chosenBlock">Аутентифицируемый блок</param>
+        /// <param name="keyType">Тип ключа: A, B</param>
+        /// <param name="keyNumber">Номер ключа</param>
+        /// <returns></returns>
+        public bool Authenticate(byte msb, byte chosenBlock, KeyType keyType, byte keyNumber)
         {
             GeneralAuthenticate authBlock = new GeneralAuthenticate
             {
                 Msb = msb,
-                Lsb = lsb,
+                Lsb = chosenBlock,
                 KeyType = keyType,
                 KeyNumber = keyNumber
             };
@@ -75,7 +94,14 @@ namespace PCSC_Connection
             return (response.SW1 == 0x90) && (response.SW2 == 0x00);
         }
 
-        public byte[] ReadBinary(byte msb, byte lsb, int size)
+        /// <summary>
+        /// Формирование APDU для чтения блока
+        /// </summary>
+        /// <param name="msb"></param>
+        /// <param name="chosenBlock">Блок для чтения</param>
+        /// <param name="size">Размер блока(16 байт)</param>
+        /// <returns></returns>
+        public byte[] ReadBinary(byte msb, byte chosenBlock, int size)
         {
             unchecked
             {
@@ -84,7 +110,7 @@ namespace PCSC_Connection
                     CLA = CUSTOM_CLA,
                     Instruction = InstructionCode.ReadBinary,
                     P1 = msb,
-                    P2 = lsb,
+                    P2 = chosenBlock,
                     Le = size
                 };
 
@@ -98,14 +124,21 @@ namespace PCSC_Connection
             }
         }
 
-        public bool UpdateBinary(byte msb, byte lsb, byte[] data)
+        /// <summary>
+        /// Формирование APDU для записи блока
+        /// </summary>
+        /// <param name="msb"></param>
+        /// <param name="chosenBlock">Блок для записи</param>
+        /// <param name="data">Данные для записи</param>
+        /// <returns></returns>
+        public bool UpdateBinary(byte msb, byte chosenBlock, byte[] data)
         {
             CommandApdu updateBinaryCmd = new CommandApdu(IsoCase.Case3Short, SCardProtocol.Any)
             {
                 CLA = CUSTOM_CLA,
                 Instruction = InstructionCode.UpdateBinary,
                 P1 = msb,
-                P2 = lsb,
+                P2 = chosenBlock,
                 Data = data
             };
 
@@ -116,11 +149,14 @@ namespace PCSC_Connection
             return IsSuccess(response);
         }
 
+        /// <summary>
+        /// Проверка, что ответ на поданные APDU команды равен 9000
+        /// </summary>
+        /// <param name="response">Полученный ответ</param>
+        /// <returns></returns>
         private static bool IsSuccess(Response response)
         {
             return (response.SW1 == (byte)SW1Code.Normal) && (response.SW2 == 0x00);
         }
-
-
     }
 }

@@ -32,10 +32,7 @@ namespace PCSC_Connection
                     }
                     string readerName = ChooseReader(readerNames);
 
-                    //string readerNames = "ACS ACR1252 1S CL Reader PICC 0";
-
-                    AttachToAllEvents(monitor); // Remember to detach, if you use this in production!
-
+                    AttachToAllEvents(monitor);
                     monitor.Start(readerName);
 
                     using (PCSC.Iso7816.IsoReader isoReader = new IsoReader(
@@ -96,10 +93,11 @@ namespace PCSC_Connection
                 }
             }
         }
+
         /// <summary>
-        /// 
+        /// Выбор ридера для работы с картой
         /// </summary>
-        /// <param name="readerNames"></param>
+        /// <param name="readerNames">Список всех полключенных ридеров</param>
         /// <returns></returns>
         private static string ChooseReader(IList<string> readerNames)
         {
@@ -129,7 +127,7 @@ namespace PCSC_Connection
         }
 
         /// <summary>
-        /// Show card status
+        /// Мониторинг событий на ридере
         /// </summary>
         /// <param name="monitor"></param>
         private static void AttachToAllEvents(ISCardMonitor monitor)
@@ -141,18 +139,33 @@ namespace PCSC_Connection
             monitor.MonitorException += MonitorException;
         }
 
+        /// <summary>
+        /// Отображение событий в консоле
+        /// </summary>
+        /// <param name="eventName">Наименование события</param>
+        /// <param name="unknown">Ридер, на котором произошло событие</param>
         private static void DisplayEvent(string eventName, CardStatusEventArgs unknown)
         {
             Console.WriteLine(">> {0} Event for reader: {1}", eventName, unknown.ReaderName);
             Console.WriteLine("State: {0}\n", unknown.State);
         }
 
+        /// <summary>
+        /// Обработка неописанных событий
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="ex"></param>
         private static void MonitorException(object sender, PCSCException ex)
         {
             Console.WriteLine("Monitor exited due an error:");
             Console.WriteLine(SCardHelper.StringifyError(ex.SCardError));
         }
 
+        /// <summary>
+        /// Загрузка ключа
+        /// </summary>
+        /// <param name="card"></param>
+        /// <returns></returns>
         private static byte loadKey(PCSC_Connection.MifareCard card)
         {
             byte keyNum = chooseKeyNum();
@@ -168,6 +181,10 @@ namespace PCSC_Connection
             return keyNum;
         }
 
+        /// <summary>
+        /// Выбор номера ключа
+        /// </summary>
+        /// <returns></returns>
         private static byte chooseKeyNum()
         {
             byte result = 32; // кол-во ключей не более 1F
@@ -186,6 +203,12 @@ namespace PCSC_Connection
             return result;
         }
 
+        /// <summary>
+        /// Получение значения ключа
+        /// </summary>
+        /// <param name="card"></param>
+        /// <param name="keyNum">Номер ключа из chooseKeyNum()</param>
+        /// <returns></returns>
         private static byte[] scanKey(PCSC_Connection.MifareCard card, byte keyNum)
         {
             string inputKeyValue = "0";
@@ -208,13 +231,18 @@ namespace PCSC_Connection
             return StringToByteArray(inputKeyValue);
         }
 
+        /// <summary>
+        /// Аутентификация блока
+        /// </summary>
+        /// <param name="card"></param>
+        /// <param name="keyNumbers">Список всех заданных ключей</param>
         private static void AuthenticateBlock(PCSC_Connection.MifareCard card, List<byte> keyNumbers)
         {
             byte keyNumber;
             Console.WriteLine("Выберете ключ для Аутентификации:");
             try
             {
-               keyNumber = keyNumbers[Convert.ToInt32(Console.ReadLine())];
+                keyNumber = keyNumbers[Convert.ToInt32(Console.ReadLine())];
             }
             catch
             {
@@ -232,15 +260,29 @@ namespace PCSC_Connection
             Console.WriteLine($"Блок: {chosenBlock:X2} Аутентифицирован\n", chosenBlock);
         }
 
+        /// <summary>
+        /// Чтение указанного блока
+        /// </summary>
+        /// <param name="card"></param>
+        /// <param name="chosenBlock">Номер блока для чтения</param>
         private static void ReadCard(PCSC_Connection.MifareCard card, byte chosenBlock)
         {
             byte[] result = card.ReadBinary(MSB, chosenBlock, 16);
-            Console.WriteLine("Значение в блока: {0}",
-                (result != null)
-                    ? BitConverter.ToString(result)
-                    : null);
+            if (result != null)
+            {
+                Console.WriteLine("Значение в блока: {0}", BitConverter.ToString(result));
+            }
+            else
+            {
+                Console.WriteLine("Чтение не удалось\n");
+            }
         }
 
+        /// <summary>
+        /// Запись в указанный блок
+        /// </summary>
+        /// <param name="card"></param>
+        /// <param name="chosenBlock">Номер блока для записи</param>
         private static void WriteCard(PCSC_Connection.MifareCard card, byte chosenBlock)
         {
             ReadCard(card, chosenBlock);
@@ -282,6 +324,10 @@ namespace PCSC_Connection
             }
         }
 
+        /// <summary>
+        /// Чтение UID карты
+        /// </summary>
+        /// <param name="card"></param>
         private static void ReadUid(PCSC_Connection.MifareCard card)
         {
             byte[] uid = card.GetData();
@@ -297,6 +343,11 @@ namespace PCSC_Connection
 
         }
 
+        /// <summary>
+        /// Преобразование строки с ввода консоли в массив байт
+        /// </summary>
+        /// <param name="hex">Строка полученная на вводе</param>
+        /// <returns>Массив байт</returns>
         public static byte[] StringToByteArray(string hex)
         {
             return Enumerable.Range(0, hex.Length)
@@ -305,11 +356,24 @@ namespace PCSC_Connection
                              .ToArray();
         }
 
-        private static bool IsEmpty(ICollection<string> readerNames) =>
-            readerNames == null || readerNames.Count < 1;
+        /// <summary>
+        /// Проверка на наличие подключенных ридеров
+        /// </summary>
+        /// <param name="readerNames">Список ридеров</param>
+        /// <returns></returns>
+        private static bool IsEmpty(ICollection<string> readerNames)
+        {
+            return readerNames == null || readerNames.Count < 1;
+        }
 
-        private static bool ExitRequested(ConsoleKeyInfo key) =>
-            key.Modifiers == ConsoleModifiers.Shift &&
-            key.Key == ConsoleKey.Q;
+        /// <summary>
+        /// Условия для выхода из программы
+        /// </summary>
+        /// <param name="key">Введенный ключ с клавиатуры</param>
+        /// <returns></returns>
+        private static bool ExitRequested(ConsoleKeyInfo key)
+        {
+            return key.Modifiers == ConsoleModifiers.Shift && key.Key == ConsoleKey.Q;
+        }
     }
 }
