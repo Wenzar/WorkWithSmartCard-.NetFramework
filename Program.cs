@@ -43,8 +43,10 @@ namespace PCSC_Connection
                         releaseContextOnDispose: false))
                     {
                         PCSC_Connection.MifareCard card = new MifareCard(isoReader);
+
                         string[] menuItems = new string[] { "[1] - Загрузить ключ", "[2] - Аутентификация блока", "[3] - Чтение блока", "[4] - Запись блока", "[5] - Считать UID", "[Shift-Q] - Выход" };
                         List<byte> keyNumbers = new List<byte>();
+
 
                         while (true)
                         {
@@ -56,30 +58,28 @@ namespace PCSC_Connection
 
                             System.ConsoleKeyInfo key = Console.ReadKey(true);
 
-                            if (key.Key == ConsoleKey.D1)
+                            if (key.Key == ConsoleKey.D1 || key.Key == ConsoleKey.NumPad1)
                             {
                                 keyNumbers.Add(loadKey(card));
                                 Console.WriteLine(Convert.ToByte(keyNumbers[0]));
                             }
 
-                            if (key.Key == ConsoleKey.D2)
+                            if (key.Key == ConsoleKey.D2 || key.Key == ConsoleKey.NumPad2)
                             {
                                 AuthenticateBlock(card, keyNumbers);
                             }
 
-                            if (key.Key == ConsoleKey.D3)
+                            if (key.Key == ConsoleKey.D3 || key.Key == ConsoleKey.NumPad3)
                             {
-                                Console.WriteLine("Выберете блок для чтения:");
-                                ReadCard(card, Convert.ToByte(Console.ReadLine()));
+                                ReadCard(card);
                             }
 
-                            if (key.Key == ConsoleKey.D4)
+                            if (key.Key == ConsoleKey.D4 || key.Key == ConsoleKey.NumPad4)
                             {
-                                Console.WriteLine("Выберете блок для записи:");
                                 WriteCard(card, Convert.ToByte(Console.ReadLine()));
                             }
 
-                            if (key.Key == ConsoleKey.D5)
+                            if (key.Key == ConsoleKey.D5 || key.Key == ConsoleKey.NumPad5)
                             {
                                 ReadUid(card);
                             }
@@ -239,7 +239,7 @@ namespace PCSC_Connection
         private static void AuthenticateBlock(PCSC_Connection.MifareCard card, List<byte> keyNumbers)
         {
             byte keyNumber;
-            Console.WriteLine("Выберете ключ для Аутентификации:");
+            Console.WriteLine("\nВыберете ключ для Аутентификации:");
             try
             {
                 keyNumber = keyNumbers[Convert.ToInt32(Console.ReadLine())];
@@ -249,15 +249,28 @@ namespace PCSC_Connection
                 throw new Exception("Неверный номер ключа");
             }
 
-            Console.WriteLine("Выберете блок для Аутентификации:");
+            Console.WriteLine("Выберете тип ключа: А/В?");
+            PCSC_Connection.KeyType keyType;
+            ConsoleKeyInfo key = Console.ReadKey();
+
+            if (key.Key == ConsoleKey.B)
+            {
+                keyType = KeyType.KeyB;
+            }
+            else
+            {
+                keyType = KeyType.KeyA;
+            }
+
+            Console.WriteLine("\nВыберете блок для Аутентификации:");
             byte chosenBlock = Convert.ToByte(Console.ReadLine());
 
-            bool authSuccessful = card.Authenticate(MSB, chosenBlock, KeyType.KeyA, keyNumber);
+            bool authSuccessful = card.Authenticate(MSB, chosenBlock, keyType, keyNumber);
             if (!authSuccessful)
             {
                 throw new Exception("AUTHENTICATE failed.");
             }
-            Console.WriteLine($"Блок: {chosenBlock:X2} Аутентифицирован\n", chosenBlock);
+            Console.WriteLine($"\nБлок: {chosenBlock:X2} Аутентифицирован\n", chosenBlock);
         }
 
         /// <summary>
@@ -265,9 +278,11 @@ namespace PCSC_Connection
         /// </summary>
         /// <param name="card"></param>
         /// <param name="chosenBlock">Номер блока для чтения</param>
-        private static void ReadCard(PCSC_Connection.MifareCard card, byte chosenBlock)
+        private static void ReadCard(PCSC_Connection.MifareCard card)
         {
-            byte[] result = card.ReadBinary(MSB, chosenBlock, 16);
+            Console.WriteLine("\nВыберете блок для чтения:");
+            byte[] result = card.ReadBinary(MSB, Convert.ToByte(Console.ReadLine()), 16);
+
             if (result != null)
             {
                 Console.WriteLine("Значение в блока: {0}", BitConverter.ToString(result));
@@ -285,7 +300,8 @@ namespace PCSC_Connection
         /// <param name="chosenBlock">Номер блока для записи</param>
         private static void WriteCard(PCSC_Connection.MifareCard card, byte chosenBlock)
         {
-            ReadCard(card, chosenBlock);
+            Console.WriteLine("\nВыберете блок для записи:");
+            ReadCard(card);
             Console.WriteLine("Хотите перезаписать? y/n");
             ConsoleKeyInfo key = Console.ReadKey(true);
             if (key.Key == ConsoleKey.Y)
