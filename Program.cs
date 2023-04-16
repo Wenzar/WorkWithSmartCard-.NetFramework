@@ -44,53 +44,95 @@ namespace PCSC_Connection
                     {
                         PCSC_Connection.MifareCard card = new MifareCard(isoReader);
 
-                        string[] menuItems = new string[] { "[1] - Загрузить ключ", "[2] - Аутентификация блока", "[3] - Чтение блока", "[4] - Запись блока", "[5] - Считать UID", "[Shift-Q] - Выход" };
-                        List<byte> keyNumbers = new List<byte>();
-
-
-                        while (true)
-                        {
-
-                            foreach (string str in menuItems)
-                            {
-                                Console.WriteLine(str);
-                            }
-
-                            System.ConsoleKeyInfo key = Console.ReadKey(true);
-
-                            if (key.Key == ConsoleKey.D1 || key.Key == ConsoleKey.NumPad1)
-                            {
-                                keyNumbers.Add(loadKey(card));
-                                Console.WriteLine(Convert.ToByte(keyNumbers[0]));
-                            }
-
-                            if (key.Key == ConsoleKey.D2 || key.Key == ConsoleKey.NumPad2)
-                            {
-                                AuthenticateBlock(card, keyNumbers);
-                            }
-
-                            if (key.Key == ConsoleKey.D3 || key.Key == ConsoleKey.NumPad3)
-                            {
-                                ReadCard(card);
-                            }
-
-                            if (key.Key == ConsoleKey.D4 || key.Key == ConsoleKey.NumPad4)
-                            {
-                                WriteCard(card, Convert.ToByte(Console.ReadLine()));
-                            }
-
-                            if (key.Key == ConsoleKey.D5 || key.Key == ConsoleKey.NumPad5)
-                            {
-                                ReadUid(card);
-                            }
-
-                            if (ExitRequested(key))
-                            {
-                                break;
-                            }
-                        }
+                        MainMenu(card);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Основоное меню приложения
+        /// </summary>
+        /// <param name="card"></param>
+        private static void MainMenu(PCSC_Connection.MifareCard card)
+        {
+            List<byte> keyNumbers = new List<byte>();
+
+            MenuList();
+            System.ConsoleKeyInfo key = ValidMenuInput();
+
+            if (key.Key == ConsoleKey.D1 || key.Key == ConsoleKey.NumPad1)
+            {
+                keyNumbers.Add(loadKey(card));
+                Console.WriteLine(Convert.ToByte(keyNumbers[0]));
+                MainMenu(card);
+            }
+
+            if (key.Key == ConsoleKey.D2 || key.Key == ConsoleKey.NumPad2)
+            {
+                AuthenticateBlock(card, keyNumbers);
+                MainMenu(card);
+            }
+
+            if (key.Key == ConsoleKey.D3 || key.Key == ConsoleKey.NumPad3)
+            {
+                ReadCard(card);
+                MainMenu(card);
+            }
+
+            if (key.Key == ConsoleKey.D4 || key.Key == ConsoleKey.NumPad4)
+            {
+                WriteCard(card, Convert.ToByte(Console.ReadLine()));
+                MainMenu(card);
+            }
+
+            if (key.Key == ConsoleKey.D5 || key.Key == ConsoleKey.NumPad5)
+            {
+                ReadUid(card);
+                MainMenu(card);
+            }
+
+            if (ExitRequested(key))
+            {
+            }
+        }
+
+        /// <summary>
+        /// Вывод основного меню
+        /// </summary>
+        private static void MenuList()
+        {
+            string[] menuItems = new string[] { "[1] - Загрузить ключ", "[2] - Аутентификация блока", "[3] - Чтение блока", "[4] - Запись блока", "[5] - Считать UID", "[Shift-Q] - Выход" };
+            foreach (string str in menuItems)
+            {
+                Console.WriteLine(str);
+            }
+            Console.WriteLine("Выберите действие:");
+        }
+
+        /// <summary>
+        /// Проверка ввода для выбора пункта меню
+        /// </summary>
+        /// <returns>Валидный ввод или запрашивает ввод повторно</returns>
+        private static System.ConsoleKeyInfo ValidMenuInput()
+        {
+            System.ConsoleKeyInfo input = Console.ReadKey(true);
+
+            if (input.Key.Equals(ConsoleKey.D1) || input.Key.Equals(ConsoleKey.NumPad1) ||
+                input.Key.Equals(ConsoleKey.D2) || input.Key.Equals(ConsoleKey.NumPad2) ||
+                input.Key.Equals(ConsoleKey.D3) || input.Key.Equals(ConsoleKey.NumPad3) ||
+                input.Key.Equals(ConsoleKey.D4) || input.Key.Equals(ConsoleKey.NumPad4) ||
+                input.Key.Equals(ConsoleKey.D5) || input.Key.Equals(ConsoleKey.NumPad5) ||
+                ExitRequested(input)
+                )
+            {
+                return input;
+            }
+            else
+            {
+                Console.WriteLine("\nТакой функции не существует!\nВведите номер из существующего списка:");
+                MenuList();
+                return ValidMenuInput();
             }
         }
 
@@ -104,14 +146,14 @@ namespace PCSC_Connection
             Console.WriteLine(new string('=', 79));
 
             // Show available readers.
-            Console.WriteLine("Available readers: ");
+            Console.WriteLine("Доступные ридеры:");
             for (var i = 0; i < readerNames.Count; i++)
             {
                 Console.WriteLine($"[{i}] {readerNames[i]}");
             }
 
             // Ask the user which one to choose.
-            Console.WriteLine("Choose reader:");
+            Console.WriteLine("Выберите ридер:");
 
             string line = Console.ReadLine();
 
@@ -120,10 +162,9 @@ namespace PCSC_Connection
                 return readerNames[choice];
             }
 
-            Console.WriteLine("An invalid number has been entered.");
-            Console.ReadKey();
+            Console.WriteLine("Выбранный ридер не существует!");
 
-            return null;
+            return ChooseReader(readerNames);
         }
 
         /// <summary>
@@ -187,19 +228,19 @@ namespace PCSC_Connection
         /// <returns></returns>
         private static byte chooseKeyNum()
         {
-            byte result = 32; // кол-во ключей не более 1F
-            while (result == 32 || result > 31)
+            byte result; // кол-во ключей не более 1F
+            Console.WriteLine("Укажите номер ключа [0-31]:");
+
+            try
             {
-                Console.WriteLine("Укажите номер ключа [0-31]:");
-                try
-                {
-                    result = Convert.ToByte(Console.ReadLine());
-                }
-                catch (Exception exception)
-                {
-                    Console.Error.WriteLine("Error message: {0} ({1})\n", exception.Message, exception.GetType());
-                }
+                result = Convert.ToByte(Console.ReadLine());
             }
+            catch
+            {
+                Console.WriteLine("Задан неверный номер для ключа!");
+                return chooseKeyNum();
+            }
+
             return result;
         }
 
