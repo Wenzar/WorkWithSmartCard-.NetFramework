@@ -20,13 +20,13 @@ namespace PCSC_Connection
             {
                 using (PCSC.ISCardContext context = ContextFactory.Instance.Establish(SCardScope.System))
                 {
-                    Console.WriteLine("This program will monitor all SmartCard readers and display all status changes.");
+                    Console.WriteLine("Эта программа будет отслеживать все устройства считывания смарт-карт и отображать все изменения статуса.");
 
                     string[] readerNames = context.GetReaders();
 
                     if (IsEmpty(readerNames))
                     {
-                        Console.Error.WriteLine("You need at least one reader in order to run this programm.");
+                        Console.Error.WriteLine("Для запуска этой программы вам нужен хотя бы один ридер!");
                         Console.ReadKey();
                         return;
                     }
@@ -162,7 +162,7 @@ namespace PCSC_Connection
                 return readerNames[choice];
             }
 
-            Console.WriteLine("Выбранный ридер не существует!");
+            Console.WriteLine("Выбранный ридер не подключен!\n");
 
             return ChooseReader(readerNames);
         }
